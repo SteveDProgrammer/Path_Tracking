@@ -1,5 +1,4 @@
 // GaitVelocity.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
 #include<opencv2/opencv.hpp>
 #include <iostream>
@@ -20,7 +19,7 @@ struct eq_line {
 eq_line straightLineFitting(vector<Point2f> all_center) //Using simple linear regression
 {
     vector<float> slopes, biases;
-    cout << "test1" << endl << endl;
+    //cout << "Processing Image " <<x<< endl << endl;
 
     float slope = 0, bias = 0;
 
@@ -53,92 +52,99 @@ eq_line straightLineFitting(vector<Point2f> all_center) //Using simple linear re
     return eq_line(slope, bias);
 }
 
-void curveLineFitting()
+void curveLineFitting(vector<Point2f> all_center)
 {
     //int i, j, k, n, N;
     //cout.precision(4);
     //cout.setf(ios::fixed);
-    //cout << "\n Enter the no. of data pairs to be entered:" << endl;
-    //cin >> N;
-    //double x[N], y[N];
-    //cout<< "\n Enter the x-axis values:" << endl;
-    //for (int i = 0; i < N; i++)
-    //    cin >> x[i];
+    //
+    //N = all_center.size(); //No. of centers/points
 
-    //cout << "\n Enter the y-axis values:" << endl;
-    //for (int i = 0; i < N; i++)
-    //    cin >> y[i];
+    //vector<float> x(N), y(N);
+    //
+    //for (i = 0; i < N; i++)
+    //    x[i] = all_center[i].x;
 
-    //cout << "What degree of polynomial do you want to use for the fit?" << endl;
-    //cin >> n;
+    //for (i = 0; i < N; i++)
+    //    y[i] = all_center[i].y;
 
-    //double X[2*n+1];
+    ////degree of polynomial to use
+    //n = 3;
 
-    //for (int i = 0; i < 2 * n + 1; i++)
+    //vector<float> X(2*n+1);
+
+    //for (i = 0; i < 2 * n + 1; i++)
     //{
     //    X[i] = 0;
-    //    for (int j = 0; j < N; j++)
+    //    for (j = 0; j < N; j++)
     //        X[i] = X[i] + pow(x[j], i);
     //}
 
-    //double B[n + 1][n + 2], a[n + 1];
-    //for (int i = 0; i <= n; i++)
-    //    for (int j = 0; j < N; j++)
+    //vector<vector<float>> B(n + 1, vector<float>(n + 2));
+    //vector<float> a(n + 1) ;
+    //for (i = 0; i <= n; i++)
+    //    for (j = 0; j < N; j++)
     //        B[i][j] = X[i + j];
 
-    //double Y[n + 1];
-    //for (int i = 0; i <= n; i++)
+    //vector<float> Y(n + 1);
+    //for (i = 0; i <= n; i++)
     //{
     //    Y[i] = 0;
-    //    for (int j = 0; j < N; j++)
+    //    for (j = 0; j < N; j++)
     //        Y[i] = Y[i] + pow(x[j], i) * y[j];
     //}
 
-    //for (int i = 0; i <= n; i++)
+    //for (i = 0; i <= n; i++)
     //    B[i][n + 1] = Y[i];
     //n = n + 1;
 
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     //cout << "\nThe normal augmmented matrix is as follows:" << endl;
 
-    //for (int i = 0; i < n; i++)
+    //for (i = 0; i < n; i++)
     //{
-    //    for (int j = 0; j < N; j++)
+    //    for (j = 0; j < N; j++)
     //        cout << B[i][j] << setw(16);
     //    cout << endl;
     //}
 
-    //for(int i=0; i<n;i++)
-    //    for (int k = 0;  k< n; k++)
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    //for(i=0; i<n;i++)
+    //    for (k = 0;  k< n; k++)
     //        if(B[i][i]<B[k][i])
-    //            for (int j = 0; j < n; j++)
+    //            for (j = 0; j < n; j++)
     //            {
-    //                double temp = B[i][j];
+    //                float temp = B[i][j];
     //                B[i][j] = B[k][j];
     //                B[k][j] = temp;
     //            }
 
-    //for (int i = 0; i < n - 1; i++)
+    //for (i = 0; i < n - 1; i++)
     //    for (k = i + 1; k < n - 1; k++)
     //    {
-    //        double t = B[k][i] / B[i][i];
+    //        float t = B[k][i] / B[i][i];
     //        for (j = 0; j <= n; j++)
     //            B[k][j] - t * B[i][j];
     //    }
 
-    //for (int i = n - 1; i >= 0; i--)
+    //for (i = n - 1; i >= 0; i--)
     //{
     //    a[i] = B[i][n];
-    //    for (int j = 0; j < n; j++)
+    //    for (j = 0; j < n; j++)
     //        if (j != i)
     //            a[i] = a[i] - B[i][j] * a[j];
     //    a[i] = a[i] / B[i][i];
     //}
 
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     //cout << "\nThe values of the coefficients are as follows:" << endl;
-    //for (int i = 0; i < n; i++)
+    //for (i = 0; i < n; i++)
     //    cout << "x^" << i << "=" << a[i] << endl;
     //cout << "\nHence the fitted polynomial is given by: \ny=";
-    //for (int i = 0; i < n; i++)
+    //for (i = 0; i < n; i++)
     //    cout << " + (" << a[i] << ")" << "x^" << i;
     //cout << endl;
 }
@@ -155,8 +161,9 @@ void cosineWaveFitting()
 
 int sno = 0;
 
-vector<Point2f> Execute(string subpath)
+vector<Point2f> Execute(string subpath, int x)
 {
+    cout << "Processing Image " << x << endl << endl;
     //Getting all files
 
     vector<cv::String> filename;
@@ -172,8 +179,8 @@ vector<Point2f> Execute(string subpath)
 
     Mat src, dst(images[0].size(), images[0].type(), Scalar(0, 0, 0));
 
-    double thresh = 250; //orig value 240
-    double max_V = 255;
+    float thresh = 250; //orig value 240
+    float max_V = 255;
 
     int x_counter = 0; //Test value
 
@@ -219,6 +226,8 @@ vector<Point2f> Execute(string subpath)
 
     eq_line line_data = straightLineFitting(all_center);
 
+    //curveLineFitting(all_center);
+
     //Points in array are in all_center are in the oreder of right to left. last in all_center is first fp and vice versa
 
     Point2f fp = Point2f(all_center[all_center.size() - 1].x, line_data.slope * all_center[all_center.size() - 1].x + line_data.bias);
@@ -257,7 +266,7 @@ int main()
         }
         else subpath = "straightLine\\straight_00" + to_string(x++);
 
-        temp = Execute(subpath);
+        temp = Execute(subpath,x);
 
         if (temp.at(0) == Point2f(-1, -1) || temp.at(1) == Point2f(-1, -1)) continue;
 
