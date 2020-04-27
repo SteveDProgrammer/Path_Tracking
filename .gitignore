@@ -339,5 +339,5 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
-# Output folder can be ignored as it's runtime generated
-Output/
+# Output folder content can be ignored as it's runtime generated
+Output/*.jpg
