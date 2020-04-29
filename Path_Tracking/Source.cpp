@@ -2,11 +2,10 @@
 
 #include<opencv2/opencv.hpp>
 #include <iostream>
+#include <array>
 
 using namespace cv;
 using namespace std;
-
-
 
 int sno = 0;
 
@@ -57,8 +56,6 @@ void straightLineFitting(vector<Point2f> all_center, Mat dst) //Using simple lin
 void curveLineFitting(vector<Point2f> all_center, Mat dst)
 {
     int i, j, k, n, N;
-   // cout.precision(4);
-   // cout.setf(ios::fixed);
     
     N = all_center.size(); //No. of centers/points
 
@@ -150,20 +147,29 @@ void curveLineFitting(vector<Point2f> all_center, Mat dst)
         cout << " + (" << a[i] << ")" << "x^" << i;
     cout << endl;
 
+    vector<Point> all_points;
 
-    //int begin = all_center[all_center.size() - 1].x;
-    //int end = all_center[0].x;
-    //int the_y = 0;
-    //for (; begin <= end; begin++)
-    //{
-    //    the_y = a[0]*1 + a[1] * pow(begin,1) + a[2] * pow(begin,2) + a[3] * pow(begin,3);
-    //    dst.at<uchar>(begin, the_y) = 255;
-    //}
-
-    for (int i =0; i<all_center.size(); i++)
+    int the_x = min(all_center[all_center.size() - 1].y, all_center[0].y);
+    int end_x = max(all_center[all_center.size() - 1].y, all_center[0].y);
+    cout << the_x <<" "<< end_x<<endl;
+    int the_y = 0;
+    for (; the_x <= end_x; the_x++)
     {
-        dst.at<uchar>(all_center.at(i).x, all_center.at(i).y) = 255;
+        //for (int g = 0; g <= n; g++)
+        the_y = a[0] * 1 + a[1] * pow(the_x, 1) + a[2] * pow(the_x, 2) + a[3] * pow(the_x, 3);// +a[4] * pow(the_x, 4) + a[5] * pow(the_x, 5);
+
+        //dst.at<uchar>(the_y, the_x) = 255;
+        all_points.push_back(Point(the_x, the_y));
     }
+
+    /*save a lot on points in a vector then draw polyline out of it*/
+
+    polylines(dst, all_points, false, Scalar(128), 1);
+
+    //for (int i =0; i<all_center.size(); i++)
+    //{
+    //    dst.at<uchar>(all_center.at(i).y, all_center.at(i).x) = 255; //The first index in dst.at(x,y) ,i.e., x represents the row number. Hence, it's the y cordinate;
+    //}
     
     //save files
     if (sno < 10) { imwrite("Output\\000" + to_string(sno++) + ".jpg", dst); }
@@ -229,21 +235,22 @@ void Execute(string subpath, int x)
         {
             minEnclosingCircle(contours[i], center[i], radius[i]);
 
-
             if (radius[i] > 12)
             {
                 all_center.push_back(center[i]);
 
-                //circle(dst, center[i], 1, Scalar(128), 1);
+                circle(dst, center[i], 1, Scalar(128), 1);
                 //circle(dst, center[i], radius[i], Scalar(128), 1);
                 points.push_back(center[i]);
             }
         }
-
     }
     //if (all_center.size() >= 2) straightLineFitting(all_center, dst);
 
     if (all_center.size() >= 2) curveLineFitting(all_center, dst);
+
+    namedWindow(to_string(x), WINDOW_NORMAL);
+    imshow(to_string(x), dst);
 }
 
 //int main()
