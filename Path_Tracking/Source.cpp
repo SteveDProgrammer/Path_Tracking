@@ -53,129 +53,6 @@ void straightLineFitting(vector<Point2f> all_center, Mat dst) //Using simple lin
     else { imwrite("Output\\0" + to_string(sno++) + ".jpg", dst); }
 }
 
-void curveLineFitting(vector<Point2f> all_center, Mat dst)
-{
-    int i, j, k, n, N;
-    
-    N = all_center.size(); //No. of centers/points
-
-    vector<float> x(N), y(N);
-    
-    for (i = 0; i < N; i++)
-        x[i] = all_center[i].x;
-
-    for (i = 0; i < N; i++)
-        y[i] = all_center[i].y;
-
-    //degree of polynomial to use
-    n = 3;
-
-    vector<float> X(2*n+1);
-
-    for (i = 0; i < 2 * n + 1; i++)
-    {
-        X[i] = 0;
-        for (j = 0; j < N; j++)
-            X[i] = X[i] + pow(x[j], i);
-    }
-
-    vector<vector<float>> B(n + 1, vector<float>(n + 2));
-    vector<float> a(n + 1) ;
-    for (i = 0; i <= n; i++)
-        for (j = 0; j <= n; j++)
-            B[i][j] = X[i + j];
-
-    vector<float> Y(n + 1);
-    for (i = 0; i <= n; i++)
-    {
-        Y[i] = 0;
-        for (j = 0; j < N; j++)
-            Y[i] = Y[i] + pow(x[j], i) * y[j];
-    }
-
-    for (i = 0; i <= n; i++)
-        B[i][n + 1] = Y[i];
-    n = n + 1;
-
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    //cout << "\nThe normal augmmented matrix is as follows:" << endl;
-
-    //for (i = 0; i < n; i++)
-    //{
-    //    for (j = 0; j < N; j++)
-    //        cout << B[i][j] << setw(16);
-    //    cout << endl;
-    //}
-
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    for(i=0; i<n;i++)
-        for (k = 0;  k< n; k++)
-            if(B[i][i]<B[k][i])
-                for (j = 0; j < n; j++)
-                {
-                    float temp = B[i][j];
-                    B[i][j] = B[k][j];
-                    B[k][j] = temp;
-                }
-
-    for (i = 0; i < n - 1; i++)
-        for (k = i + 1; k < n - 1; k++)
-        {
-            float t = B[k][i] / B[i][i];
-            for (j = 0; j <= n; j++)
-                B[k][j] - t * B[i][j];
-        }
-
-    for (i = n - 1; i >= 0; i--)
-    {
-        a[i] = B[i][n];
-        for (j = 0; j < n; j++)
-            if (j != i)
-                a[i] = a[i] - B[i][j] * a[j];
-        a[i] = a[i] / B[i][i];
-    }
-
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    cout << "\nThe values of the coefficients are as follows:" << endl;
-    for (i = 0; i < n; i++)
-        cout << "x^" << i << "=" << a[i] << endl;
-    cout << "\nHence the fitted polynomial is given by: \ny=";
-    for (i = 0; i < n; i++)
-        cout << " + (" << a[i] << ")" << "x^" << i;
-    cout << endl;
-
-    vector<Point> all_points;
-
-    int the_x = min(all_center[all_center.size() - 1].y, all_center[0].y);
-    int end_x = max(all_center[all_center.size() - 1].y, all_center[0].y);
-    cout << the_x <<" "<< end_x<<endl;
-    int the_y = 0;
-    for (; the_x <= end_x; the_x++)
-    {
-        //for (int g = 0; g <= n; g++)
-        the_y = a[0] * 1 + a[1] * pow(the_x, 1) + a[2] * pow(the_x, 2) + a[3] * pow(the_x, 3);// +a[4] * pow(the_x, 4) + a[5] * pow(the_x, 5);
-
-        //dst.at<uchar>(the_y, the_x) = 255;
-        all_points.push_back(Point(the_x, the_y));
-    }
-
-    /*save a lot on points in a vector then draw polyline out of it*/
-
-    polylines(dst, all_points, false, Scalar(128), 1);
-
-    //for (int i =0; i<all_center.size(); i++)
-    //{
-    //    dst.at<uchar>(all_center.at(i).y, all_center.at(i).x) = 255; //The first index in dst.at(x,y) ,i.e., x represents the row number. Hence, it's the y cordinate;
-    //}
-    
-    //save files
-    if (sno < 10) { imwrite("Output\\000" + to_string(sno++) + ".jpg", dst); }
-    else if (sno < 100) { imwrite("Output\\00" + to_string(sno++) + ".jpg", dst); }
-    else { imwrite("Output\\0" + to_string(sno++) + ".jpg", dst); }
-}
 
 void sineWaveFitting()
 {
@@ -185,6 +62,50 @@ void sineWaveFitting()
 void cosineWaveFitting()
 {
 
+}
+
+void Regression(vector<Point2f> all_center, Mat image, int x)
+{
+    int m = all_center.size();
+    int n = 5; //(order of equation - 1) = number of columns
+    Mat X(m, n, DataType<double>::type), XTrans, XInv, Y(m, 1, DataType<double>::type);
+
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < m; j++)
+            if (i == 0)
+            {
+                X.at<double>(j, i) = 1;
+                Y.at<double>(j, i) = all_center.at(j).y;
+            }
+            else {
+                X.at<double>(j, i) = pow(all_center.at(j).x, i);
+                cout << X.at<double>(j, i) << " ";
+            }
+        cout << endl;
+    }
+
+    transpose(X, XTrans);
+
+    Mat w = ((XTrans * X).inv()) * XTrans * Y;
+
+    vector<Point> all_points;
+
+    double y = 0;
+    for (int i = 0; i < image.cols; i++)
+    {
+        y = w.at<double>(0,0);
+
+        for (int j = 1; j < n; j++)
+            y += w.at<double>(j, 0) *pow(i, j);
+
+        all_points.push_back(Point(i,y));
+    }
+
+    polylines(image, all_points, false, Scalar(128), 1);
+    
+    namedWindow(to_string(x), WINDOW_NORMAL);
+    imshow(to_string(x), image);
 }
 
 void Execute(string subpath, int x)
@@ -247,10 +168,12 @@ void Execute(string subpath, int x)
     }
     //if (all_center.size() >= 2) straightLineFitting(all_center, dst);
 
-    if (all_center.size() >= 2) curveLineFitting(all_center, dst);
+    //if (all_center.size() >= 2) curveLineFitting(all_center, dst);
 
-    namedWindow(to_string(x), WINDOW_NORMAL);
-    imshow(to_string(x), dst);
+    if (all_center.size() >= 2) Regression(all_center, dst, x);
+
+    //namedWindow(to_string(x), WINDOW_NORMAL);
+    //imshow(to_string(x), dst);
 }
 
 //int main()
@@ -286,28 +209,94 @@ void Execute(string subpath, int x)
 //    return 0;
 //}
 
+//int main()
+//{
+//    int x = 1;
+//    string subpath = "LCleft\LCleft_00" + 1;
+//
+//    string name = "Thermal_data\LCleft\LCleft_001\\00001.jpg";
+//    //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
+//
+//    string out_path = "LCleft\\";
+//
+//    vector<Point2f> temp;
+//    while (x <= 1)
+//    {
+//        if (x > 99)
+//        {
+//            subpath = "LCleft\\LCleft_" + to_string(x);
+//        }
+//        else if (x > 9)
+//        {
+//            subpath = "LCleft\\LCleft_0" + to_string(x);
+//        }
+//        else subpath = "LCleft\\LCleft_00" + to_string(x);
+//        cout << x << endl;
+//        Execute(subpath, x++);
+//
+//        //cv::line(src, temp.at(0), temp.at(1), Scalar(128), 1, LINE_AA, 0);
+//    }
+//    /* namedWindow("gg", WINDOW_NORMAL);
+//     imshow("gg", src);*/
+//    waitKey(0);
+//    return 0;
+//}
+
+//int main()
+//{
+//    int x = 1;
+//    string subpath = "sineleft\\sineleft_00" + 1;
+//
+//    string name = "Thermal_data\\sineleft\\sineleft_001\\0001.jpg";
+//    //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
+//
+//    string out_path = "sineleft\\";
+//
+//    vector<Point2f> temp;
+//    while (x <= 10)
+//    {
+//        if (x > 99)
+//        {
+//            subpath = "sineleft\\sineleft_" + to_string(x);
+//        }
+//        else if (x > 9)
+//        {
+//            subpath = "sineleft\\sineleft_0" + to_string(x);
+//        }
+//        else subpath = "sineleft\\sineleft_00" + to_string(x);
+//        cout << x << endl;
+//        Execute(subpath, x++);
+//
+//        //cv::line(src, temp.at(0), temp.at(1), Scalar(128), 1, LINE_AA, 0);
+//    }
+//    /* namedWindow("gg", WINDOW_NORMAL);
+//     imshow("gg", src);*/
+//    waitKey(0);
+//    return 0;
+//}
+
 int main()
 {
     int x = 1;
-    string subpath = "LCleft\LCleft_00" + 1;
+    string subpath = "sineright\\sineright_00" + 1;
 
-    string name = "Thermal_data\LCleft\LCleft_001\\00001.jpg";
+    string name = "Thermal_data\\sineright\\sineright_001\\0001.jpg";
     //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
 
-    string out_path = "LCleft\\";
+    string out_path = "sineright\\";
 
     vector<Point2f> temp;
-    while (x <= 50)
+    while (x <= 10)
     {
         if (x > 99)
         {
-            subpath = "LCleft\\LCleft_" + to_string(x);
+            subpath = "sineright\\sineright_" + to_string(x);
         }
         else if (x > 9)
         {
-            subpath = "LCleft\\LCleft_0" + to_string(x);
+            subpath = "sineright\\sineright_0" + to_string(x);
         }
-        else subpath = "LCleft\\LCleft_00" + to_string(x);
+        else subpath = "sineright\\sineright_00" + to_string(x);
         cout << x << endl;
         Execute(subpath, x++);
 
