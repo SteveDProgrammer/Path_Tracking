@@ -53,21 +53,10 @@ void straightLineFitting(vector<Point2f> all_center, Mat dst) //Using simple lin
     else { imwrite("Output\\0" + to_string(sno++) + ".jpg", dst); }
 }
 
-
-void sineWaveFitting()
-{
-
-}
-
-void cosineWaveFitting()
-{
-
-}
-
-void Regression(vector<Point2f> all_center, Mat image, int x)
+void Regression(vector<Point2f> all_center, Mat image, int features, int x)
 {
     int m = all_center.size();
-    int n = 5; //(order of equation - 1) = number of columns
+    int n = features+1; //number of columns
     Mat X(m, n, DataType<double>::type), XTrans, XInv, Y(m, 1, DataType<double>::type);
 
     for (int i = 0; i < n; i++)
@@ -170,44 +159,43 @@ void Execute(string subpath, int x)
 
     //if (all_center.size() >= 2) curveLineFitting(all_center, dst);
 
-    if (all_center.size() >= 2) Regression(all_center, dst, x);
+    if (all_center.size() >= 2) Regression(all_center, dst,3, x);
 
     //namedWindow(to_string(x), WINDOW_NORMAL);
     //imshow(to_string(x), dst);
 }
 
-//int main()
-//{
-//    int x = 1;
-//    string subpath = "straightLine\\straight_00" + 1;
-//
-//    string name = "Thermal_data\\straightLine\\straight_001\\00001.jpg";
-//    //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
-//
-//    string out_path = "straightLine\\";
-//
-//    vector<Point2f> temp;
-//    while (x <= 10)
-//    {
-//        if (x > 99)
-//        {
-//            subpath = "straightLine\\straight_" + to_string(x);
-//        }
-//        else if (x > 9)
-//        {
-//            subpath = "straightLine\\straight_0" + to_string(x);
-//        }
-//        else subpath = "straightLine\\straight_00" + to_string(x);
-//        cout << x << endl;
-//        Execute(subpath, x++);
-//
-//        //cv::line(src, temp.at(0), temp.at(1), Scalar(128), 1, LINE_AA, 0);
-//    }
-//   /* namedWindow("gg", WINDOW_NORMAL);
-//    imshow("gg", src);*/
-//    waitKey(0);
-//    return 0;
-//}
+int main()
+{
+    int x = 1;
+   
+    string LC_left = "LCleft\\straight";
+    string LC_right = "LCright\\straight";
+    string SC_left = "SCleft\\straight";
+    string SC_right = "SCright\\straight";
+    string sineright = "sineright\\sineright";
+    string sineleft = "sineleft\\sineleft";
+    string straight = "straightLine\\straight";
+
+    string subpath = straight + "_001";
+
+    int path_no = 0;
+
+    vector<Point2f> temp;
+    while (path_no < 7)
+    {
+        while (x <= 10)
+        {
+            if (x > 99)      subpath = "straightLine\\straight_" + to_string(x);
+            else if (x > 9)  subpath = "straightLine\\straight_0" + to_string(x);
+            else             subpath = "straightLine\\straight_00" + to_string(x);
+
+            Execute(subpath, x++);
+        }
+    }
+    waitKey(0);
+    return 0;
+}
 
 //int main()
 //{
@@ -275,35 +263,35 @@ void Execute(string subpath, int x)
 //    return 0;
 //}
 
-int main()
-{
-    int x = 1;
-    string subpath = "sineright\\sineright_00" + 1;
-
-    string name = "Thermal_data\\sineright\\sineright_001\\0001.jpg";
-    //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
-
-    string out_path = "sineright\\";
-
-    vector<Point2f> temp;
-    while (x <= 10)
-    {
-        if (x > 99)
-        {
-            subpath = "sineright\\sineright_" + to_string(x);
-        }
-        else if (x > 9)
-        {
-            subpath = "sineright\\sineright_0" + to_string(x);
-        }
-        else subpath = "sineright\\sineright_00" + to_string(x);
-        cout << x << endl;
-        Execute(subpath, x++);
-
-        //cv::line(src, temp.at(0), temp.at(1), Scalar(128), 1, LINE_AA, 0);
-    }
-    /* namedWindow("gg", WINDOW_NORMAL);
-     imshow("gg", src);*/
-    waitKey(0);
-    return 0;
-}
+//int main()
+//{
+//    int x = 1;
+//    string subpath = "sineright\\sineright_00" + 1;
+//
+//    string name = "Thermal_data\\sineright\\sineright_001\\0001.jpg";
+//    //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
+//
+//    string out_path = "sineright\\";
+//
+//    vector<Point2f> temp;
+//    while (x <= 10)
+//    {
+//        if (x > 99)
+//        {
+//            subpath = "sineright\\sineright_" + to_string(x);
+//        }
+//        else if (x > 9)
+//        {
+//            subpath = "sineright\\sineright_0" + to_string(x);
+//        }
+//        else subpath = "sineright\\sineright_00" + to_string(x);
+//        cout << x << endl;
+//        Execute(subpath, x++);
+//
+//        //cv::line(src, temp.at(0), temp.at(1), Scalar(128), 1, LINE_AA, 0);
+//    }
+//    /* namedWindow("gg", WINDOW_NORMAL);
+//     imshow("gg", src);*/
+//    waitKey(0);
+//    return 0;
+//}
