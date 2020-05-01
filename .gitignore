@@ -342,3 +342,4 @@ healthchecksdb
 # Output folder content can be ignored as it's runtime generated
 Output/*.jpg
 /Path_Tracking/Output
+/Path_Tracking/Output_data

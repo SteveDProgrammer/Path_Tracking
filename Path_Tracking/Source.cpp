@@ -1,59 +1,19 @@
 // GaitVelocity.cpp : This file contains the 'main' function. Program execution begins and ends there.
 
-#include<opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <array>
+#include <algorithm>
+
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string/replace.hpp>
+
+using namespace boost::filesystem;
 
 using namespace cv;
 using namespace std;
 
-int sno = 0;
-
-void straightLineFitting(vector<Point2f> all_center, Mat dst) //Using simple linear regression
-{
-    vector<float> slopes, biases;
-
-    float slope = 0, bias = 0;
-    int mean_index = all_center.size() / 2 - 1;
-
-    Point2f mean = all_center[mean_index];
-
-    //if all_center has even number of elements
-    if (all_center.size() % 2 == 0)
-    {
-        mean.x = (all_center[mean_index].x + all_center[mean_index + 1].x) / 2;
-        mean.y = (all_center[mean_index].y + all_center[mean_index + 1].y) / 2;
-
-        auto itPos = all_center.begin() + mean_index;
-
-        all_center.insert(itPos, mean);
-    }
-
-    float numerator = 0, denominator = 0;
-
-    for (auto& center : all_center)
-    {
-        numerator += (center.x - mean.x) * (center.y - mean.y);
-        denominator += (center.x - mean.x) * (center.x - mean.x);
-    }
-
-    slope = numerator / denominator;
-    bias = mean.y - slope * mean.x;
-
-    //Points in array are in all_center are in the oreder of right to left. last in all_center is first fp and vice versa
-
-    Point2f fp = Point2f(all_center[all_center.size() - 1].x, slope * all_center[all_center.size() - 1].x + bias);
-    Point2f lp = Point2f(all_center[0].x, slope * all_center[0].x + bias);
-
-    cv::line(dst, all_center.at(0), all_center.at(all_center.size() - 1), (255, 255, 255), 2, LINE_AA, 0);
-
-    //save files
-    if (sno < 10) { imwrite("Output\\000" + to_string(sno++) + ".jpg", dst); }
-    else if (sno < 100) { imwrite("Output\\00" + to_string(sno++) + ".jpg", dst); }
-    else { imwrite("Output\\0" + to_string(sno++) + ".jpg", dst); }
-}
-
-void Regression(vector<Point2f> all_center, Mat image, int features, int x)
+Mat Regression(vector<Point2f> all_center, Mat image, int features)
 {
     int m = all_center.size();
     int n = features+1; //number of columns
@@ -92,25 +52,45 @@ void Regression(vector<Point2f> all_center, Mat image, int features, int x)
     }
 
     polylines(image, all_points, false, Scalar(128), 1);
-    
-    namedWindow(to_string(x), WINDOW_NORMAL);
-    imshow(to_string(x), image);
+
+    return image;
 }
 
-void Execute(string subpath, int x)
+void genOutput(Mat image, string parent_folder_path)
 {
-    //cout << "Processing Image " <<x<< endl << endl;
+    //Output paths
+
+    vector<path> out{
+        "Output_data/LCleft",
+        "Output_data/LCright",
+        "Output_data/SCleft",
+        "Output_data/SCright",
+        "Output_data/sineleft",
+        "Output_data/sineright",
+        "Output_data/straightLine"
+    };
+
+    for (int i = 0; i < out.size(); i++) if (!exists(out.at(i))) create_directories(out.at(i)); //Create if output directories don't exist
+    //Output the files
+    boost::replace_all(parent_folder_path, "/", "//");
+    boost::replace_all(parent_folder_path, "Thermal_data", "Output_data");
+    cout << parent_folder_path+".jpg" << endl;
+    imwrite(parent_folder_path+".jpg",image);
+}
+
+void Execute(string subpath, int x = 0)
+{
     //Getting all files
     
     vector<cv::String> filename;
-    string path = "Thermal_data\\" + subpath + "\\*.jpg";
+    string path = subpath + "\\*.jpg";
 
     glob(path, filename, false);
 
     vector<Mat> images;
-    size_t count = filename.size(); //number of png files in images folder
+    size_t no_of_images = filename.size(); //number of png files in images folder
 
-    for (size_t i = 0; i < count; i++)
+    for (size_t i = 0; i < no_of_images; i++)
         images.push_back(imread(filename[i], IMREAD_GRAYSCALE));
 
     Mat src, dst(images[0].size(), images[0].type(), Scalar(0, 0, 0));
@@ -121,7 +101,7 @@ void Execute(string subpath, int x)
     int x_counter = 0; //Test value
 
     vector<Point2f> all_center;
-    for (size_t i = 0; i < count; i++)
+    for (size_t i = 0; i < no_of_images; i++)
     {
         threshold(images[i], images[i], thresh, max_V, THRESH_BINARY); // Binary Thresholding
         GaussianBlur(images[i], images[i], Size(5, 5), 0); //Applying Gaussian Blur
@@ -149,149 +129,52 @@ void Execute(string subpath, int x)
             {
                 all_center.push_back(center[i]);
 
-                circle(dst, center[i], 1, Scalar(128), 1);
+                //circle(dst, center[i], 1, Scalar(128), 1);
                 //circle(dst, center[i], radius[i], Scalar(128), 1);
                 points.push_back(center[i]);
             }
         }
     }
-    //if (all_center.size() >= 2) straightLineFitting(all_center, dst);
+    
+    int no_of_features = 0;
 
-    //if (all_center.size() >= 2) curveLineFitting(all_center, dst);
+    if (path.find("straight") != string::npos) no_of_features = 1;
+    else no_of_features = 4;
 
-    if (all_center.size() >= 2) Regression(all_center, dst,3, x);
-
-    //namedWindow(to_string(x), WINDOW_NORMAL);
-    //imshow(to_string(x), dst);
+    if (all_center.size() >= 2) genOutput(Regression(all_center, dst,no_of_features), subpath);
 }
 
 int main()
 {
-    int x = 1;
-   
-    string LC_left = "LCleft\\straight";
-    string LC_right = "LCright\\straight";
-    string SC_left = "SCleft\\straight";
-    string SC_right = "SCright\\straight";
-    string sineright = "sineright\\sineright";
-    string sineleft = "sineleft\\sineleft";
-    string straight = "straightLine\\straight";
+    vector<path> all_subfolders;
 
-    string subpath = straight + "_001";
-
-    int path_no = 0;
-
-    vector<Point2f> temp;
-    while (path_no < 7)
+    path p("Thermal_data");
+    
+    try
     {
-        while (x <= 10)
+        if (exists(p) && is_directory(p))
         {
-            if (x > 99)      subpath = "straightLine\\straight_" + to_string(x);
-            else if (x > 9)  subpath = "straightLine\\straight_0" + to_string(x);
-            else             subpath = "straightLine\\straight_00" + to_string(x);
+            for (recursive_directory_iterator dir(p), end; dir != end; dir++)
+                if (boost::filesystem::extension(*dir) == ".jpg")
+                {
+                    string temp = ((path)(*dir)).string();
+                    temp = temp.substr(0,temp.rfind("\\"));
+                    all_subfolders.push_back(temp);
+                }
+            all_subfolders.erase(unique(all_subfolders.begin(), all_subfolders.end()), all_subfolders.end());
+        }
+        else cout << p << " does not exist\n";
 
-            Execute(subpath, x++);
+        for (int i = 0; i < all_subfolders.size(); i++)
+        {
+           Execute(all_subfolders.at(i).string());
         }
     }
-    waitKey(0);
+
+    catch (const filesystem_error & ex)
+    {
+        cout << ex.what() << '\n';
+    }
+
     return 0;
 }
-
-//int main()
-//{
-//    int x = 1;
-//    string subpath = "LCleft\LCleft_00" + 1;
-//
-//    string name = "Thermal_data\LCleft\LCleft_001\\00001.jpg";
-//    //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
-//
-//    string out_path = "LCleft\\";
-//
-//    vector<Point2f> temp;
-//    while (x <= 1)
-//    {
-//        if (x > 99)
-//        {
-//            subpath = "LCleft\\LCleft_" + to_string(x);
-//        }
-//        else if (x > 9)
-//        {
-//            subpath = "LCleft\\LCleft_0" + to_string(x);
-//        }
-//        else subpath = "LCleft\\LCleft_00" + to_string(x);
-//        cout << x << endl;
-//        Execute(subpath, x++);
-//
-//        //cv::line(src, temp.at(0), temp.at(1), Scalar(128), 1, LINE_AA, 0);
-//    }
-//    /* namedWindow("gg", WINDOW_NORMAL);
-//     imshow("gg", src);*/
-//    waitKey(0);
-//    return 0;
-//}
-
-//int main()
-//{
-//    int x = 1;
-//    string subpath = "sineleft\\sineleft_00" + 1;
-//
-//    string name = "Thermal_data\\sineleft\\sineleft_001\\0001.jpg";
-//    //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
-//
-//    string out_path = "sineleft\\";
-//
-//    vector<Point2f> temp;
-//    while (x <= 10)
-//    {
-//        if (x > 99)
-//        {
-//            subpath = "sineleft\\sineleft_" + to_string(x);
-//        }
-//        else if (x > 9)
-//        {
-//            subpath = "sineleft\\sineleft_0" + to_string(x);
-//        }
-//        else subpath = "sineleft\\sineleft_00" + to_string(x);
-//        cout << x << endl;
-//        Execute(subpath, x++);
-//
-//        //cv::line(src, temp.at(0), temp.at(1), Scalar(128), 1, LINE_AA, 0);
-//    }
-//    /* namedWindow("gg", WINDOW_NORMAL);
-//     imshow("gg", src);*/
-//    waitKey(0);
-//    return 0;
-//}
-
-//int main()
-//{
-//    int x = 1;
-//    string subpath = "sineright\\sineright_00" + 1;
-//
-//    string name = "Thermal_data\\sineright\\sineright_001\\0001.jpg";
-//    //Mat src(imread(name).size(), IMREAD_GRAYSCALE, Scalar(0, 0, 0));
-//
-//    string out_path = "sineright\\";
-//
-//    vector<Point2f> temp;
-//    while (x <= 10)
-//    {
-//        if (x > 99)
-//        {
-//            subpath = "sineright\\sineright_" + to_string(x);
-//        }
-//        else if (x > 9)
-//        {
-//            subpath = "sineright\\sineright_0" + to_string(x);
-//        }
-//        else subpath = "sineright\\sineright_00" + to_string(x);
-//        cout << x << endl;
-//        Execute(subpath, x++);
-//
-//        //cv::line(src, temp.at(0), temp.at(1), Scalar(128), 1, LINE_AA, 0);
-//    }
-//    /* namedWindow("gg", WINDOW_NORMAL);
-//     imshow("gg", src);*/
-//    waitKey(0);
-//    return 0;
-//}
